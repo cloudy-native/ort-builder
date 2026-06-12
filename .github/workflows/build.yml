@@ -29,7 +29,7 @@ jobs:
             --skip_tests \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines onnxruntime_ENABLE_LTO=OFF \
-            --cmake_extra_defines CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL \
+            --cmake_extra_defines CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded \
             --update --build
         shell: bash
 
