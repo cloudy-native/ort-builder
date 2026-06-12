@@ -2,10 +2,6 @@ name: Build ORT Static Libraries
 
 on:
   workflow_dispatch:
-    inputs:
-      ort_version:
-        description: 'ORT version tag'
-        default: 'v1.21.0'
 
 jobs:
   build-windows:
@@ -22,12 +18,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Apply LTO patch
-        run: |
-          cd onnxruntime
-          git apply ../ltcg_patch_for_windows.patch
-        shell: bash
-
       - name: Build Release
         run: |
           cd onnxruntime
@@ -38,6 +28,7 @@ jobs:
             --compile_no_warning_as_error \
             --skip_tests \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
+            --cmake_extra_defines onnxruntime_ENABLE_LTO=OFF \
             --cmake_extra_defines CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL \
             --update --build
         shell: bash
@@ -52,95 +43,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: onnxruntime-static-win-x64
-          path: package/
-
-  build-macos:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Build arm64
-        run: |
-          cd onnxruntime
-          python tools/ci_build/build.py \
-            --build_dir ../build/arm64 \
-            --config Release \
-            --parallel \
-            --compile_no_warning_as_error \
-            --skip_tests \
-            --osx_arch arm64 \
-            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
-            --cmake_extra_defines CMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
-            --update --build
-
-      - name: Build x86_64
-        run: |
-          cd onnxruntime
-          python tools/ci_build/build.py \
-            --build_dir ../build/x86_64 \
-            --config Release \
-            --parallel \
-            --compile_no_warning_as_error \
-            --skip_tests \
-            --osx_arch x86_64 \
-            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
-            --cmake_extra_defines CMAKE_OSX_DEPLOYMENT_TARGET=11.0 \
-            --update --build
-
-      - name: Package
-        run: |
-          mkdir -p package/lib/arm64 package/lib/x86_64 package/include
-          cp onnxruntime/include/onnxruntime/core/session/*.h package/include/
-          find build/arm64/Release -name "*.a" -exec cp {} package/lib/arm64/ \;
-          find build/x86_64/Release -name "*.a" -exec cp {} package/lib/x86_64/ \;
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-static-macos
-          path: package/
-
-  build-linux:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Build
-        run: |
-          cd onnxruntime
-          python tools/ci_build/build.py \
-            --build_dir ../build/linux \
-            --config Release \
-            --parallel \
-            --compile_no_warning_as_error \
-            --skip_tests \
-            --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
-            --update --build
-
-      - name: Package
-        run: |
-          mkdir -p package/lib package/include
-          cp onnxruntime/include/onnxruntime/core/session/*.h package/include/
-          find build/linux/Release -name "*.a" -exec cp {} package/lib/ \;
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: onnxruntime-static-linux-x64
           path: package/
