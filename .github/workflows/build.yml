@@ -27,9 +27,9 @@ jobs:
             --parallel \
             --compile_no_warning_as_error \
             --skip_tests \
+            --enable_msvc_static_runtime \
             --cmake_extra_defines onnxruntime_BUILD_SHARED_LIB=OFF \
             --cmake_extra_defines onnxruntime_ENABLE_LTO=OFF \
-            --cmake_extra_defines CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded \
             --update --build
         shell: bash
 
